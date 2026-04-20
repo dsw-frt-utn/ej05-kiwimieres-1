@@ -60,4 +60,16 @@ public class Persistencia
         InicializarSucursales();
         InicializarVehiculos();
     }
+    // Falta este método para obtener las sucursales, lo necesitamos para mostrar el código de la sucursal en la vista
+    public static List<Sucursal> GetSucursales()
+    {
+        return Sucursales;
+    }
+
+    // Para agregar nuevos vehículos, aunque no se pide en el enunciado, lo dejo por si se quiere probar con otros vehículos
+    public static void AgregarVehiculo(Vehiculo vehiculo)
+    {
+        Vehiculos.Add(vehiculo);
+    }
+
 }
