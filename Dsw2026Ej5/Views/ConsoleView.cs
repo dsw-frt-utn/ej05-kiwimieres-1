@@ -1,4 +1,7 @@
-﻿namespace Dsw2026Ej5.Views;
+﻿using Dsw2026Ej5.Data;
+using Dsw2026Ej5.Domain;
+
+namespace Dsw2026Ej5.Views;
 
 public class ConsoleView
 {
@@ -27,10 +30,93 @@ public class ConsoleView
             else if (opcion == "2")
             {
                 Console.WriteLine("Agregando vehículo...");
+                AgregarVehiculos();
             }
         }
         while (opcion != "3");
     }
+
+    private static void AgregarVehiculos()
+    {
+        LimpiarPantalla();
+        DibujarLinea();
+        CentrarTexto("Agregar Nuevo Vehículo", out int _);
+        DibujarLinea();
+
+        Console.Write("\nIngrese Patente: ");
+        string patente = Console.ReadLine() ?? "";
+
+        Console.Write("Ingrese Marca: ");
+        string marca = Console.ReadLine() ?? "";
+
+        Console.Write("Ingrese Modelo: ");
+        string modelo = Console.ReadLine() ?? "";
+
+        Console.Write("Ingrese Año de Fabricación: ");
+        int anio;
+        // TryParse intenta convertir el texto a número. Si falla, vuelve a preguntar.
+        while (!int.TryParse(Console.ReadLine(), out anio))
+            Console.Write("Error. Ingrese un año válido (solo números): ");
+
+        Console.Write("Ingrese Capacidad de Carga (Kg): ");
+        double capacidad;
+        while (!double.TryParse(Console.ReadLine(), out capacidad))
+            Console.Write("Error. Ingrese una capacidad válida: ");
+
+        // 1. Mostrar y elegir Sucursales
+        Console.WriteLine("\n--- Sucursales Disponibles ---");
+        var sucursales = Persistencia.GetSucursales();
+        for (int i = 0; i < sucursales.Count; i++)
+        {
+            Console.WriteLine($"{i + 1}. {sucursales[i].GetCodigo()} - {sucursales[i].GetCiudad()}");
+        }
+
+        Console.Write("Seleccione el número de la sucursal: ");
+        int opSucursal;
+        while (!int.TryParse(Console.ReadLine(), out opSucursal) || opSucursal < 1 || opSucursal > sucursales.Count)
+            Console.Write("Error. Seleccione una opción válida: ");
+
+        Sucursal sucursalElegida = sucursales[opSucursal - 1];
+
+        // 2. Elegir Tipo de Vehículo
+        Console.WriteLine("\n--- Tipo de Vehículo ---");
+        Console.WriteLine("1. Combustible");
+        Console.WriteLine("2. Eléctrico");
+        Console.Write("Seleccione el tipo (1 o 2): ");
+        string tipoStr = Console.ReadLine() ?? "";
+
+        Vehiculo nuevoVehiculo;
+
+        // 3. Pedir datos específicos e instanciar
+        if (tipoStr == "1") // Combustible
+        {
+            Console.Write("\nIngrese Kilómetros por Litro: ");
+            double kmL;
+            while (!double.TryParse(Console.ReadLine(), out kmL)) Console.Write("Inválido. Ingrese números: ");
+
+            Console.Write("Ingrese Litros Extra: ");
+            double lExtra;
+            while (!double.TryParse(Console.ReadLine(), out lExtra)) Console.Write("Inválido. Ingrese números: ");
+
+            nuevoVehiculo = new VehiculoCombustible(patente, marca, modelo, anio, capacidad, sucursalElegida, kmL, lExtra);
+        }
+        else // Eléctrico (por defecto si no elige 1)
+        {
+            Console.Write("\nIngrese Kwh Base: ");
+            double kwh;
+            while (!double.TryParse(Console.ReadLine(), out kwh)) Console.Write("Inválido. Ingrese números: ");
+
+            nuevoVehiculo = new VehiculoElectrico(patente, marca, modelo, anio, capacidad, sucursalElegida, kwh);
+        }
+
+        // 4. Guardar en memoria
+        Persistencia.AgregarVehiculo(nuevoVehiculo);
+
+        Console.WriteLine("\n¡Vehículo agregado con éxito!");
+        Console.WriteLine("Presione una tecla para volver al menú...");
+        Console.ReadLine();
+    }
+
     public static void CentrarTexto(string? texto, out int usado, int? ancho = null, bool salto = true)
     {
         texto ??= string.Empty;
@@ -65,6 +151,9 @@ public class ConsoleView
     private static void ListarVehiculos()
     {
         LimpiarPantalla();
+        //Para asegurarnos de que se muestren los vehículos actualizados después de agregar uno nuevo, volvemos a cargar la lista desde el controlador.
+        _vehiculos = Controlador.GetVehiculos();
+
         string[] columnas = { "Patente", "Vehículo", "Tipo", "Cap. Carga", "Km/l", "Año", "L.Extra", "Kms a recorrer" };
         DibujarEncabezado(columnas);
         DibjuarDatos(columnas.Length);
@@ -81,7 +170,7 @@ public class ConsoleView
         (double, double) totalConsumos = Controlador.CalcularConsumos(vehiculos);
         DibujarLinea();
         Console.WriteLine($"Total consumo Vehículos Eléctricos: {totalConsumos.Item1} kWh");
-        Console.WriteLine($"Total consumo Vehículos Combustible: {totalConsumos.Item2} Litros");
+        Console.WriteLine($"Total consumo Vehículos Combustible: {totalConsumos.Item2:F2} Litros");
         DibujarLinea();
         Console.Write("\n");
         Console.Write("\n");
